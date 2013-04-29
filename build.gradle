@@ -1,0 +1,372 @@
+import com.veracode.apiwrapper.wrappers.UploadAPIWrapper
+import com.veracode.apiwrapper.wrappers.ResultsAPIWrapper
+
+// TODO: abstraction for parameter handling
+// TODO: refactor as proper Gradle JAR plugin
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath fileTree(dir: 'lib', include: '*.jar')
+        classpath group: 'commons-io', name: 'commons-io', version: '2.4'
+    }
+}
+
+task veracodeAppList << {
+    writeXml(
+            'build/app-list.xml', loginUpdate().getAppList()
+    ).each() { app ->
+        out.println app.@app_id + '=' + app.@app_name
+    }
+}
+
+task veracodeAppInfo << {
+    if (project.hasProperty('appId')) {
+        writeXml(
+                'build/app-info.xml', loginUpdate().getAppInfo(appId)
+        ).application[0].attributes().each() { k, v ->
+            out.println "$k=$v"
+        }
+    } else {
+        out.println 'Usage: gradle veracodeAppInfo -PappId=123'
+    }
+}
+
+task veracodeBuildList << {
+    if (project.hasProperty('appId')) {
+        writeXml(
+                'build/build-list.xml', loginUpdate().getBuildList(appId)
+        ).each() { build ->
+            out.println "${build.@build_id}=${build.@version}"
+        }
+    } else {
+        out.println 'Usage: gradle veracodeBuildList -PappId=123'
+    }
+}
+
+task veracodeBuildInfo << {
+    if (project.hasProperty('appId')) {
+        String xmlResponse
+        if (project.hasProperty('buildId')) {
+            xmlResponse = loginUpdate().getBuildInfo(appId, buildId)
+        } else {
+            xmlResponse = loginUpdate().getBuildInfo(appId)
+        }
+        Node buildInfo = writeXml('build/build-info.xml', xmlResponse) // need to print twice, so assign var
+        println '[Build]'
+        buildInfo.build[0].attributes().each() { k, v ->
+            out.println "\t$k=$v"
+        }
+        println '[Analysis Unit]'
+        buildInfo.build[0].children()[0].attributes().each { k, v ->
+            out.println "\t$k=$v"
+        }
+    } else {
+        out.println 'Usage: gradle veracodeBuildInfo -PappId=123 [-PbuildId=123]'
+    }
+}
+
+task veracodeFileList << {
+    if (project.hasProperty('appId')) {
+        String xmlResponse
+        if (project.hasProperty('buildId')) {
+            xmlResponse = loginUpdate().getFileList(appId, buildId)
+        } else {
+            xmlResponse = loginUpdate().getFileList(appId)
+        }
+        Node filelist = writeXml('build/file-list.xml', xmlResponse)
+        filelist.each() { file ->
+            println "${file.@file_name}=${file.@file_status}"
+        }
+        println '\tTotal=' + filelist.children().size()
+    } else {
+        out.println 'Usage: gradle veracodeFileList -PappId=123 [-PbuildId=123]'
+    }
+}
+
+task veracodePreScanResults << {
+    if (project.hasProperty('appId')) {
+        String xmlResponse
+        if (project.hasProperty('buildId')) {
+            xmlResponse = loginUpdate().getPreScanResults(appId, buildId)
+        } else {
+            xmlResponse = loginUpdate().getPreScanResults(appId)
+        }
+        writeXml('build/pre-scan-results.xml', xmlResponse)
+    } else {
+        out.println 'Usage: gradle veracodePreScanResults -PappId=123 [-PbuildId=123]'
+    }
+}
+
+task veracodeScanResults << {
+    if (project.hasProperty('buildId')) {
+        String xmlResponse = loginResults().detailedReport(buildId)
+        writeXml('build/scan-results.xml', xmlResponse)
+    } else {
+        out.println 'Usage: gradle veracodeScanResults -PbuildId=123'
+    }
+}
+
+task veracodeScanResultsInCsv(dependsOn: 'veracodeScanResults') << {
+    File csvFile = new File('build/scan-results.csv')
+    csvFile.newWriter()
+    csvFile << ["Issue Id",
+            "Severity",
+            "Exploit Level",
+            "CWE Id",
+            "CWE Name",
+            "Module",
+            "Source",
+            "Source File Path",
+            "Line",
+            "Remediation Status",
+            "Mitigation Status",
+            "Mitigation Action",
+            "Mitigation Description",
+            "Mitigation Date"].join(",") + "\n"
+
+    readXml('build/scan-results.xml').severity.each() { severity ->
+        severity.category.each() { category ->
+            category.cwe.each() { cwe ->
+                cwe.staticflaws.flaw.each() { flaw ->
+                    def row = [flaw.@issueid,
+                            flaw.@severity,
+                            flaw.@exploitLevel,
+                            cwe.@cweid,
+                            cwe.@cwename,
+                            flaw.@module,
+                            flaw.@sourcefile,
+                            flaw.@sourcefilepath,
+                            flaw.@line,
+                            flaw.@remediation_status,
+                            flaw.@mitigation_status_desc,
+                            flaw.mitigations?.mitigation[0]?.@action,
+                            flaw.mitigations?.mitigation[0]?.@description,
+                            flaw.mitigations?.mitigation[0]?.@date]
+                            .collect { '"' + (it == null ? "" : it.replace('"', '""')) + '"' }
+                    def rowString = row.join(',')
+                    csvFile << rowString + "\n"
+                }
+            }
+        }
+    }
+}
+
+task veracodeCreateBuild << {
+    if (project.hasProperty('appId') && project.hasProperty('version')) {
+        println writeXml('build/create-build.xml', loginUpdate().createBuild(appId, version))
+    } else {
+        out.println 'Usage: gradle veracodeCreateBuild -PappId=123 -Pversion=xxx'
+    }
+}
+
+task generateToUpload << {
+    List<File> files = []
+
+    if (project.hasProperty('dir')) {
+
+        // prevent uploading if "to-upload" is not empty unless user force
+        if (!project.hasProperty('force')) {
+            File toUploadDir = new File('build/to-upload')
+            if (toUploadDir.isDirectory() && toUploadDir.list().size() > 0) {
+                // to-upload is not empty
+                println 'Directory "build/to-upload" is not empty. Cannot proceed.'
+                return
+            }
+        }
+
+        // get files to process
+        new File((String) dir).eachFileRecurse() { file ->
+            if (file.isFile() && file.name.toLowerCase().endsWith(".jar")) {
+                files.add file
+            }
+        }
+
+        // copy to build directory
+        for (File file : files) {
+            copy {
+                from file
+                into 'build/to-upload'
+
+                // strip timestamp
+                rename { String fileName ->
+                    fileName.replaceAll(/(.+)-\d{8}.\d{6}-\d+/, '$1')
+                }
+            }
+        }
+
+        println "${files.size()} file(s) copied to build/to-upload"
+
+    } else {
+        println 'Usage: gradle -q generateToUpload -Pdir=xxx -Pforce'
+    }
+}
+
+task veracodeUpload << {
+    String xmlResponse = ''
+    UploadAPIWrapper update = loginUpdate()
+
+    if (project.hasProperty('appId')) {
+        // upload each file in build/to-upload
+        new File('build/to-upload').eachFile() { file ->
+            xmlResponse = update.uploadFile(appId, file.absolutePath)
+            delete file.absolutePath
+            println "Processed $file.name"
+        }
+
+        // write output of last upload
+        writeXml('build/upload-file.xml', xmlResponse)
+
+        println 'Check build/upload-file.xml for status of uploaded files.'
+    }
+}
+
+task veracodePreScan << {
+    if (project.hasProperty('appId')) {
+        writeXml('build/pre-scan.xml', loginUpdate().beginPreScan(appId))
+        println 'Check build/pre-scan.xml for response status.'
+    } else {
+        out.println 'Usage: gradle veracodePreScan -PappId=123'
+    }
+}
+
+task veracodeScan << {
+
+    if (project.hasProperty('appId')) {
+        def moduleIds = []
+        def whiteList = readListFromFile(new File("src/apps/${appId}/modules-whitelist.txt"))
+        readXml('build/pre-scan-results.xml').each() { module ->
+            if (whiteList.contains(module.@name)) {
+                moduleIds << module.@id
+            }
+        }
+        println "Modules in whitelist: ${whiteList.size()}"
+        println "Modules selected: ${moduleIds.size()}"
+
+        writeXml('build/scan.xml', loginUpdate().beginScan(appId, moduleIds.join(","), 'false'))
+    } else {
+        out.println 'Usage: gradle veracodeScan -PappId=123'
+    }
+}
+
+task veracodeRemoveFile << {
+    // TODO: this is not tested
+    if (project.hasProperty('appId') && project.hasProperty('fileId')) {
+        writeXml('build/remove-file.xml', loginUpdate().removeFile(appId, fileId))
+    } else {
+        println 'Usage: gradle -q veracodeRemoveFile -PappId=123 -PfileId=123'
+    }
+}
+
+task veracodeDeleteBuild << {
+    if (project.hasProperty('appId')) {
+        writeXml('build/delete-build.xml', loginUpdate().deleteBuild(appId))
+    } else {
+        println 'Usage: gradle -q veracodeDeleteBuild -PappId=123'
+    }
+}
+
+task preScanModuleList() << {
+    // TODO: -PonlyFatalErrors
+    readXml('build/pre-scan-results.xml').each() { module ->
+        println "${module.@has_fatal_errors == 'true' ? '* ' : ''} ${module.@id} : ${module.@name}"
+    }
+}
+
+/**
+ * This task ensures all modules in pre-scan results are accounted for within the white/black list of modules in
+ * "src/apps/${appId}/modules-*.txt".
+ */
+task preScanModuleVerify() << {
+    if (project.hasProperty('appId')) {
+
+        println "Verifying against modules list modules-*.txt..."
+        println ""
+
+        def blackListErr = readListFromFile(new File("src/apps/${appId}/modules-blacklist-error.txt"))
+        def blackListExt = readListFromFile(new File("src/apps/${appId}/modules-blacklist-external.txt"))
+        def blackListInt = readListFromFile(new File("src/apps/${appId}/modules-blacklist-internal.txt"))
+        def whiteList = readListFromFile(new File("src/apps/${appId}/modules-whitelist.txt"))
+
+        def allList = blackListErr + blackListExt + blackListInt + whiteList
+        allList = allList.sort()
+
+        println "modules-blacklist-error = ${blackListErr.size()}"
+        println "modules-blacklist-external = ${blackListExt.size()}"
+        println "modules-blacklist-internal = ${blackListInt.size()}"
+        println "modules-whitelist = ${whiteList.size()}"
+        println "all lists total = ${allList.size()}"
+        println ""
+
+        def notFoundList = new ArrayList<String>()
+        def fatalErrorList = new ArrayList<String>()
+        readXml('build/pre-scan-results.xml').each() { module ->
+            if (!allList.contains(module.@name)) {
+                notFoundList << module.@name
+            }
+
+            if (module.@has_fatal_errors.equals("true") && whiteList.contains(module.@name)) {
+                fatalErrorList << module.@name
+            }
+        }
+
+        if (notFoundList.isEmpty() && fatalErrorList.isEmpty()) {
+            println "Prescan module verification success."
+        } else {
+            println "Prescan module verification failed. DO NOT PROCEED WITH VERACODE SCAN!"
+            if (!notFoundList.isEmpty()) {
+                println "Module not found in all list:"
+                notFoundList.each { notFoundModule ->
+                    println "${notFoundModule}"
+                }
+            }
+
+            if (!fatalErrorList.isEmpty()) {
+                println "Module in fatal error but in whitelist:"
+                fatalErrorList.each { fatalErrorModule ->
+                    println "${fatalErrorModule}"
+                }
+            }
+        }
+
+    } else {
+        println 'Usage: gradle -q preScanModuleVerify -PappId=123'
+    }
+}
+
+// === utility methods ===
+
+UploadAPIWrapper loginUpdate() {
+    UploadAPIWrapper update = new UploadAPIWrapper()
+    update.setUpCredentials username, password
+    return update
+}
+
+ResultsAPIWrapper loginResults() {
+    ResultsAPIWrapper results = new ResultsAPIWrapper()
+    results.setUpCredentials username, password
+    return results
+}
+
+def writeXml(String filename, String content) {
+    GFileUtils.writeFile(content, new File(filename))
+    new XmlParser().parseText(content)
+}
+
+def readXml(String filename) {
+    new XmlParser().parseText(GFileUtils.readFile(new File(filename)))
+}
+
+List readListFromFile(File file) {
+
+    def set = new HashSet<Set>();
+    file.eachLine { line ->
+        if (set.contains(line)) {
+            println "ERROR: duplicate line: [$line]"
+        }
+        set.add(line)
+    }
+    return new ArrayList<String>(set)
+}
