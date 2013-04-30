@@ -1,5 +1,8 @@
 import com.veracode.apiwrapper.wrappers.UploadAPIWrapper
 import com.veracode.apiwrapper.wrappers.ResultsAPIWrapper
+import groovy.json.*
+
+import java.rmi.UnexpectedException
 
 // TODO: abstraction for parameter handling
 // TODO: refactor as proper Gradle JAR plugin
@@ -336,6 +339,86 @@ task preScanModuleVerify() << {
     }
 }
 
+/**
+ * Report flaws by teams as described in src/teams.json
+ */
+task reportFlawsByTeam() << {
+    if (project.hasProperty('appId') && project.hasProperty('mode')) {
+        def teams = new JsonSlurper().parse(new FileReader("src/apps/$appId/teams.json")).teams
+        int count = 0
+
+        readXml('build/scan-results.xml').severity.each() { severity ->
+            severity.category.each() { category ->
+                category.cwe.each() { cwe ->
+                    cwe.staticflaws.flaw.each() { flaw ->
+
+                        if (mode == 'verbose') {
+                            // verbose report
+                            def row = [findTeam(teams, flaw),
+                                    flaw.@issueid,
+                                    flaw.@severity,
+                                    flaw.@exploitLevel,
+                                    cwe.@cweid,
+                                    cwe.@cwename,
+                                    flaw.@module,
+                                    flaw.@sourcefile,
+                                    flaw.@sourcefilepath,
+                                    flaw.@line,
+                                    flaw.@remediation_status,
+                                    flaw.@mitigation_status_desc,
+                                    flaw.mitigations?.mitigation[0]?.@action,
+                                    flaw.mitigations?.mitigation[0]?.@description,
+                                    flaw.mitigations?.mitigation[0]?.@date]
+                                    .collect { '"' + (it == null ? "" : it.replace('"', '""')) + '"' }
+                            println row.join(',')
+                            count++
+                        } else if (mode == 'actionSummary') {
+                            // only flaws that require action
+                            if (!['Mitigation Proposed'].contains(flaw.@mitigation_status_desc) &&
+                                    !['Fixed'].contains(flaw.@remediation_status)
+                            ) {
+                                def row = [findTeam(teams, flaw),
+                                        flaw.@issueid,
+                                        cwe.@cwename,
+                                        flaw.@module,
+                                        flaw.@remediation_status,
+                                        flaw.@mitigation_status_desc]
+                                        .collect { '"' + (it == null ? "" : it.replace('"', '""')) + '"' }
+                                println row.join(',')
+                                count++
+                            }
+                        } else if (mode == 'action') {
+                            // only flaws that require action
+                            if (!['Mitigation Proposed'].contains(flaw.@mitigation_status_desc) &&
+                                    !['Fixed'].contains(flaw.@remediation_status)
+                            ) {
+                                def row = [findTeam(teams, flaw),
+                                        flaw.@issueid,
+                                        cwe.@cwename,
+                                        flaw.@module,
+                                        flaw.@sourcefile,
+                                        flaw.@sourcefilepath,
+                                        flaw.@remediation_status,
+                                        flaw.@mitigation_status_desc]
+                                        .collect { '"' + (it == null ? "" : it.replace('"', '""')) + '"' }
+                                println row.join(',')
+                                count++
+                            }
+                        } else {
+                            println 'Unsupported mode.'
+                        }
+
+                    }
+                }
+            }
+        }
+        println "Total flaw count: $count."
+
+    } else {
+        println 'Usage: gradle reportFlawsByTeam -PappId=999 -Pmode=[action|actionSummary|verbose]'
+    }
+}
+
 // === utility methods ===
 
 UploadAPIWrapper loginUpdate() {
@@ -369,4 +452,35 @@ List readListFromFile(File file) {
         set.add(line)
     }
     return new ArrayList<String>(set)
+}
+
+String findTeam(teams, flaw) {
+    // TODO: support source path exclusions? should not be part of team?
+
+    for (def team : teams) {
+        // see if flaw's module is excluded from this team
+        boolean excludeFromTeam = false;
+
+        for (def moduleExclusion : team.moduleExclusions) {
+            if (flaw.@module.contains(moduleExclusion)) {
+                excludeFromTeam = true;
+                break;
+            }
+        }
+
+        // this flaw's module is excluded, check next team
+        if (excludeFromTeam) {
+            continue;
+        }
+
+        // see if this flaw's module is assign to this team
+        for (def module : team.modules) {
+            if (flaw.@module.contains(module)) {
+                return team.name
+            }
+        }
+    }
+
+    // no match
+    throw new UnexpectedException("Unable to resolve team")
 }
