@@ -1,0 +1,22 @@
+{
+    "teams": [
+        {
+            "name": "team-a",
+            "modules": [
+                "aaa"
+            ],
+            "moduleExclusions": [
+                "bbb"
+            ]
+        },
+        {
+            "name": "team-b",
+            "modules": [
+                "ccc"
+            ],
+            "moduleExclusions": [
+                "ddd"
+            ]
+        }
+    ]
+}
