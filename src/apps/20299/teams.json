@@ -1,0 +1,142 @@
+{
+    "teams": [
+        {
+            "name": "Aphrodite",
+            "modules": [
+                "Component_Decisionprocessflow_Deployment", "Component_Decisionsetter_Runtime_Builder",
+                "component-treatmenttable-gui", "component-treatmenttable-design-gui", "component-adproject-business",
+                "component-adproject-gui", "component-policyruleset-gui",
+                "component-classset-gui",
+                "component-decisionprocessflow-business",
+                "component-scorecard-gui",
+                "component-decisionprocessflow-gui",
+                "component-report-scorecard-mapping-gui",
+                "component-scorecard-runtime-builder",
+                "component-filter-business",
+                "component-adversereasoncode-gui",
+                "component-indextables-gui",
+                "component-policyruleset-gui"
+            ]
+        },
+        {
+            "name": "Apollo",
+            "modules": [
+                "Component_Importer_GUI", "component-tester-business", "Component_User_Defined_Function_GUI",
+                "security-administration-business", "component-script-gui", "Component_User_Defined_Function_Business",
+                "framework-errorhandling-business", "framework-errorhandling-gui",
+                "framework-authentication-business",
+                "component-security-administration-business", "component-tester-gui",
+                "component-contentmanagement-gui",
+                "framework-module-validation",
+                "framework-common-gui-widget",
+                "component-script-runtime-builder",
+                "component-matrix-gui",
+                "component-script-business",
+                "Component_Exporter_GUI"
+            ],
+            "moduleExclusions": ["Page_Designer"]
+        },
+        {
+            "name": "Atlas",
+            "modules": [
+                "Framework_Servers_Management_GUI",
+                "framework-servers-management-business"
+            ]
+        },
+        {
+            "name": "Eros",
+            "modules": [
+                "Component_Workflow_Test_Runtime_Builder",
+                "component-entity-model-gui",
+                "component-pdm-business",
+                "component-entity-model-business",
+                "Component_Database_Physical_Data_Model_Deployment"
+            ]
+        },
+        {
+            "name": "Hestia",
+            "modules": [
+                "component-jsf-gui",
+                "framework-license-assistant",
+                "component-batchprocessflow-gui",
+                "component-security-administration-gui",
+                "Framework_SAE_Model_Business",
+                "Framework_Jsf_Cli",
+                "Framework_DocMan_Business",
+                "Component_Context_Information_Provider",
+                "Framework_User_Maintenance_CLI"
+            ]
+        },
+        {
+            "name": "Io",
+            "modules": [
+                "da-bundle", "Library_Da_Osgi", "Library_Legacy_Strategy_Viewer",
+                "Component_Strategy_Viewer_GUI",
+                "decisionagent-discovery",
+                "ea-core"
+            ]
+        },
+        {
+            "name": "Morpheus",
+            "modules": [
+                "OSGI_Converter",
+                "Batch_Deployment_Job",
+                "framework-scm-client-gui",
+                "Framework_Storage_Business",
+                "Framework_Storage_Proxy",
+                "framework-common-visual-gui",
+                "TenantManager.jar"
+            ]
+        },
+        {
+            "name": "Pandora",
+            "modules": [
+                "bpa-",
+                "WorkflowRuntimeEngine",
+                "Page_Designer",
+                "Workflow_Runtime_Engine", "Component_Page_Layout",
+                "Component_Page", "Component_Search_Page",
+                "DA_Adapter", "TableCreatorApp", "ClientMgmtApp", "Component_Runtime_Monitor", "Stage_Tree_Runtime",
+                "Page_Layout_Cascade",
+                "component-page", "component-search-page", "framework-page",
+                "component-workflow-gui",
+                "component-workflowcomposition-gui",
+                "component-search-gui",
+                "component-populatedata-gui"
+            ],
+            "moduleExclusions": [],
+            "sourcefilepathExclusions": [
+                "com/experian/eda/framework/common/",
+                "com/experian/eda/framework/runtime/",
+                "com/experian/eda/component/decisionagent/",
+                "com/experian/eda/da/"
+            ]
+        },
+        {
+            "name": "Poseidon",
+            "modules": [
+                "component-report-business",
+                "component-report-gui",
+                "Component_Measure_GUI"
+            ]
+        },
+        {
+            "name": "External",
+            "modules": [
+                "ant-1.6.5.jar",
+                "derby-10.8.2.2.jar",
+                "jasypt-cli-bundle.jar",
+                "logback-classic-0.9.12.jar",
+                "org.apache.felix.eventadmin-1.2.2.jar",
+                "org.apache.felix.fileinstall-2.0.8.jar",
+                "org.apache.felix.shell.remote-1.0.4.jar",
+                "wrapper.jar",
+                "wrapperApp.jar"
+            ]
+        },
+        {
+            "name": "Unknown",
+            "modules": [""]
+        }
+    ]
+}

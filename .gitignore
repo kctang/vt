@@ -4,3 +4,9 @@ build
 lib
 .idea
 *.iml
+.svn
+
+# prevent accidental commit of local library/docs
+docs
+lib
+src/apps
