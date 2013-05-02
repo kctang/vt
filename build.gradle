@@ -273,9 +273,21 @@ task veracodeDeleteBuild << {
 
 task preScanModuleList() << {
     // TODO: -PonlyFatalErrors
+    def blacklist = [:]
+    def whitelist = [:]
     readXml('build/pre-scan-results.xml').each() { module ->
-        println "${module.@has_fatal_errors == 'true' ? '* ' : ''} ${module.@id} : ${module.@name}"
+        module.@has_fatal_errors == 'true' ? blacklist.put(module.@id, module.@name) : whitelist.put(module.@id, module.@name)
     }
+
+    blacklist.each() { println 'Blacklist => ' + it }
+    whitelist.each() { println 'Whitelist => ' + it }
+
+    def blacklistedJars = ''
+    def whitelistedJars = ''
+    blacklist.values().each() { blacklistedJars += it + '\n' }
+    whitelist.values().each() { whitelistedJars += it + '\n' }
+    GFileUtils.writeStringToFile(new File('build/blacklist.txt'), blacklistedJars)
+    GFileUtils.writeStringToFile(new File('build/whitelist.txt'), whitelistedJars)
 }
 
 /**
