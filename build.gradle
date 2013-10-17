@@ -26,31 +26,27 @@ task veracodeAppList << {
 }
 
 task veracodeAppInfo << {
-    if (project.hasProperty('appId')) {
+    if (!isMissingArguements(getName(), 'appId')) {
         writeXml(
                 'build/app-info.xml', loginUpdate().getAppInfo(appId)
         ).application[0].attributes().each() { k, v ->
             out.println "$k=$v"
         }
-    } else {
-        out.println 'Usage: gradle veracodeAppInfo -PappId=123'
     }
 }
 
 task veracodeBuildList << {
-    if (project.hasProperty('appId')) {
+    if (!isMissingArguements(getName(), 'appId')) {
         writeXml(
                 'build/build-list.xml', loginUpdate().getBuildList(appId)
         ).each() { build ->
             out.println "${build.@build_id}=${build.@version}"
         }
-    } else {
-        out.println 'Usage: gradle veracodeBuildList -PappId=123'
     }
 }
 
 task veracodeBuildInfo << {
-    if (project.hasProperty('appId')) {
+    if (!isMissingArguements(getName(), 'appId', 'buildId' + optional)) {
         String xmlResponse
         if (project.hasProperty('buildId')) {
             xmlResponse = loginUpdate().getBuildInfo(appId, buildId)
@@ -66,13 +62,11 @@ task veracodeBuildInfo << {
         buildInfo.build[0].children()[0].attributes().each { k, v ->
             out.println "\t$k=$v"
         }
-    } else {
-        out.println 'Usage: gradle veracodeBuildInfo -PappId=123 [-PbuildId=123]'
     }
 }
 
 task veracodeFileList << {
-    if (project.hasProperty('appId')) {
+    if (!isMissingArguements(getName(), 'appId')) {
         String xmlResponse
         if (project.hasProperty('buildId')) {
             xmlResponse = loginUpdate().getFileList(appId, buildId)
@@ -84,13 +78,11 @@ task veracodeFileList << {
             println "${file.@file_name}=${file.@file_status}"
         }
         println '\tTotal=' + filelist.children().size()
-    } else {
-        out.println 'Usage: gradle veracodeFileList -PappId=123 [-PbuildId=123]'
     }
 }
 
 task veracodePreScanResults << {
-    if (project.hasProperty('appId')) {
+    if (!isMissingArguements(getName(), 'appId')) {
         String xmlResponse
         if (project.hasProperty('buildId')) {
             xmlResponse = loginUpdate().getPreScanResults(appId, buildId)
@@ -98,17 +90,13 @@ task veracodePreScanResults << {
             xmlResponse = loginUpdate().getPreScanResults(appId)
         }
         writeXml('build/pre-scan-results.xml', xmlResponse)
-    } else {
-        out.println 'Usage: gradle veracodePreScanResults -PappId=123 [-PbuildId=123]'
     }
 }
 
 task veracodeScanResults << {
-    if (project.hasProperty('buildId')) {
+    if (!isMissingArguements(getName(), 'buildId')) {
         String xmlResponse = loginResults().detailedReport(buildId)
         writeXml('build/scan-results.xml', xmlResponse)
-    } else {
-        out.println 'Usage: gradle veracodeScanResults -PbuildId=123'
     }
 }
 
@@ -158,17 +146,15 @@ task veracodeScanResultsInCsv(dependsOn: 'veracodeScanResults') << {
 }
 
 task veracodeCreateBuild << {
-    if (project.hasProperty('appId') && project.hasProperty('version')) {
+    if (!isMissingArguements(getName(), 'appId', 'version')) {
         println writeXml('build/create-build.xml', loginUpdate().createBuild(appId, version))
-    } else {
-        out.println 'Usage: gradle veracodeCreateBuild -PappId=123 -Pversion=xxx'
     }
 }
 
 task generateToUpload << {
     List<File> files = []
 
-    if (project.hasProperty('dir')) {
+    if (!isMissingArguements(getName(), 'dir', 'force' + optional)) {
 
         // prevent uploading if "to-upload" is not empty unless user force
         if (!project.hasProperty('force')) {
@@ -202,8 +188,6 @@ task generateToUpload << {
 
         println "${files.size()} file(s) copied to build/to-upload"
 
-    } else {
-        println 'Usage: gradle -q generateToUpload -Pdir=xxx -Pforce'
     }
 }
 
@@ -211,7 +195,7 @@ task veracodeUpload << {
     String xmlResponse = ''
     UploadAPIWrapper update = loginUpdate()
 
-    if (project.hasProperty('appId')) {
+    if (!isMissingArguements(getName(), 'appId')) {
         // upload each file in build/to-upload
         new File('build/to-upload').eachFile() { file ->
             xmlResponse = update.uploadFile(appId, file.absolutePath)
@@ -227,17 +211,15 @@ task veracodeUpload << {
 }
 
 task veracodePreScan << {
-    if (project.hasProperty('appId')) {
+    if (!isMissingArguements(getName(), 'appId')) {
         writeXml('build/pre-scan.xml', loginUpdate().beginPreScan(appId))
         println 'Check build/pre-scan.xml for response status.'
-    } else {
-        out.println 'Usage: gradle veracodePreScan -PappId=123'
     }
 }
 
 task veracodeScan << {
 
-    if (project.hasProperty('appId')) {
+    if (!isMissingArguements(getName(), 'appId')) {
         def moduleIds = []
         def whiteList = readListFromFile(new File("src/apps/${appId}/modules-whitelist.txt"))
         readXml('build/pre-scan-results.xml').each() { module ->
@@ -249,25 +231,19 @@ task veracodeScan << {
         println "Modules selected: ${moduleIds.size()}"
 
         writeXml('build/scan.xml', loginUpdate().beginScan(appId, moduleIds.join(","), 'false'))
-    } else {
-        out.println 'Usage: gradle veracodeScan -PappId=123'
     }
 }
 
 task veracodeRemoveFile << {
     // TODO: this is not tested
-    if (project.hasProperty('appId') && project.hasProperty('fileId')) {
+    if (!isMissingArguements(getName(), 'appId', 'fileId')) {
         writeXml('build/remove-file.xml', loginUpdate().removeFile(appId, fileId))
-    } else {
-        println 'Usage: gradle -q veracodeRemoveFile -PappId=123 -PfileId=123'
     }
 }
 
 task veracodeDeleteBuild << {
-    if (project.hasProperty('appId')) {
+    if (!isMissingArguements(getName(), 'appId')) {
         writeXml('build/delete-build.xml', loginUpdate().deleteBuild(appId))
-    } else {
-        println 'Usage: gradle -q veracodeDeleteBuild -PappId=123'
     }
 }
 
@@ -295,7 +271,7 @@ task preScanModuleList() << {
  * "src/apps/${appId}/modules-*.txt".
  */
 task preScanModuleVerify() << {
-    if (project.hasProperty('appId')) {
+    if (!isMissingArguements(getName(), 'appId')) {
 
         println "Verifying against modules list modules-*.txt..."
         println ""
@@ -346,8 +322,6 @@ task preScanModuleVerify() << {
             }
         }
 
-    } else {
-        println 'Usage: gradle -q preScanModuleVerify -PappId=123'
     }
 }
 
@@ -355,7 +329,7 @@ task preScanModuleVerify() << {
  * Report flaws by teams as described in src/teams.json
  */
 task reportFlawsByTeam() << {
-    if (project.hasProperty('appId') && project.hasProperty('mode')) {
+    if (!isMissingArguements(getName(), 'appId', 'mode')) {
         def teams = new JsonSlurper().parse(new FileReader("src/apps/$appId/teams.json")).teams
         int count = 0
 
@@ -398,6 +372,8 @@ task reportFlawsByTeam() << {
                                         .collect { '"' + (it == null ? "" : it.replace('"', '""')) + '"' }
                                 println row.join(',')
                                 count++
+
+
                             }
                         } else if (mode == 'action') {
                             // only flaws that require action
@@ -426,8 +402,6 @@ task reportFlawsByTeam() << {
         }
         println "Total flaw count: $count."
 
-    } else {
-        println 'Usage: gradle reportFlawsByTeam -PappId=999 -Pmode=[action|actionSummary|verbose]'
     }
 }
 
@@ -495,4 +469,39 @@ String findTeam(teams, flaw) {
 
     // no match
     throw new UnexpectedException("Unable to resolve team")
+}
+
+boolean isMissingArguements(String taskName, String... arguements) {
+    StringBuilder outputMessage = new StringBuilder("Usage: gradle ${taskName}")
+    boolean missingArguement = false
+
+    def parameters = [
+    'appId': '-PappId=123',
+    'buildId': '-PbuildId=123',
+    'version': '-Pversion=xxx',
+    'dir': '-Pdir=xxx',
+    'force': '-Pforce',
+    'fileId': '-PfileId=123',
+    'mode': '-Pmode=[action|actionSummary|verbose]']
+
+    arguements.each() {
+        if (it.endsWith(optional)) {
+            String originalArguement = it.substring(0, it.length() - optional.length())
+            outputMessage.append(' [')
+            outputMessage.append(parameters.get(originalArguement))
+            outputMessage.append(']')
+        } else {
+            outputMessage.append(' ')
+            outputMessage.append(parameters.get(it))
+            if (!project.hasProperty(it)) {
+                missingArguement = true
+            }
+        }
+    }
+
+    if (missingArguement) {
+        println outputMessage.toString()
+    }
+
+    return missingArguement
 }
