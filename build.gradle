@@ -4,7 +4,6 @@ import groovy.json.*
 
 import java.rmi.UnexpectedException
 
-// TODO: abstraction for parameter handling
 // TODO: refactor as proper Gradle JAR plugin
 
 buildscript {
@@ -82,14 +81,20 @@ task veracodeFileList << {
 }
 
 task veracodePreScanResults << {
-    if (!isMissingArguements(getName(), 'appId')) {
+    if (!isMissingArguements(getName(), 'appId', 'buildId' + optional)) {
         String xmlResponse
         if (project.hasProperty('buildId')) {
             xmlResponse = loginUpdate().getPreScanResults(appId, buildId)
         } else {
             xmlResponse = loginUpdate().getPreScanResults(appId)
         }
-        writeXml('build/pre-scan-results.xml', xmlResponse)
+
+        Node result = writeXml('build/pre-scan-results.xml', xmlResponse)
+        if (result.name().equals('error')) {
+            println result.text()
+        } else {
+            println 'Pre-scan completed'
+        }
     }
 }
 
