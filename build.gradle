@@ -152,7 +152,19 @@ task veracodeScanResultsInCsv(dependsOn: 'veracodeScanResults') << {
 
 task veracodeCreateBuild << {
     if (!isMissingArguements(getName(), 'appId', 'version')) {
-        println writeXml('build/create-build.xml', loginUpdate().createBuild(appId, version))
+        Node buildInfo = writeXml('build/create-build.xml', loginUpdate().createBuild(appId, version))
+        if (buildInfo.name().equals('error')) {
+            println buildInfo.text()
+        } else {
+            println '[Build]'
+            buildInfo.build[0].attributes().each() { k, v ->
+                out.println "\t$k=$v"
+            }
+            println '[Analysis Unit]'
+            buildInfo.build[0].children()[0].attributes().each { k, v ->
+                out.println "\t$k=$v"
+            }
+        }
     }
 }
 
@@ -247,6 +259,7 @@ task veracodeRemoveFile << {
 }
 
 task veracodeDeleteBuild << {
+    // Removes the most recent build.
     if (!isMissingArguements(getName(), 'appId')) {
         writeXml('build/delete-build.xml', loginUpdate().deleteBuild(appId))
     }
@@ -487,7 +500,7 @@ boolean isMissingArguements(String taskName, String... arguements) {
     'dir': '-Pdir=xxx',
     'force': '-Pforce',
     'fileId': '-PfileId=123',
-    'mode': '-Pmode=[action|actionSummary|verbose]']
+    'mode': '-Pmode=action|actionSummary|verbose']
 
     arguements.each() {
         if (it.endsWith(optional)) {
