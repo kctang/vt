@@ -25,7 +25,7 @@ task veracodeAppList << {
 }
 
 task veracodeAppInfo << {
-    if (!isMissingArguements(getName(), 'appId')) {
+    if (!hasArguments(getName(), 'appId')) {
         writeXml(
                 'build/app-info.xml', loginUpdate().getAppInfo(appId)
         ).application[0].attributes().each() { k, v ->
@@ -35,7 +35,7 @@ task veracodeAppInfo << {
 }
 
 task veracodeBuildList << {
-    if (!isMissingArguements(getName(), 'appId')) {
+    if (!hasArguments(getName(), 'appId')) {
         writeXml(
                 'build/build-list.xml', loginUpdate().getBuildList(appId)
         ).each() { build ->
@@ -45,7 +45,7 @@ task veracodeBuildList << {
 }
 
 task veracodeBuildInfo << {
-    if (!isMissingArguements(getName(), 'appId', 'buildId' + optional)) {
+    if (!hasArguments(getName(), 'appId', 'buildId' + optional)) {
         String xmlResponse
         if (project.hasProperty('buildId')) {
             xmlResponse = loginUpdate().getBuildInfo(appId, buildId)
@@ -65,7 +65,7 @@ task veracodeBuildInfo << {
 }
 
 task veracodeFileList << {
-    if (!isMissingArguements(getName(), 'appId')) {
+    if (!hasArguments(getName(), 'appId')) {
         String xmlResponse
         if (project.hasProperty('buildId')) {
             xmlResponse = loginUpdate().getFileList(appId, buildId)
@@ -81,7 +81,7 @@ task veracodeFileList << {
 }
 
 task veracodePreScanResults << {
-    if (!isMissingArguements(getName(), 'appId', 'buildId' + optional)) {
+    if (!hasArguments(getName(), 'appId', 'buildId' + optional)) {
         String xmlResponse
         if (project.hasProperty('buildId')) {
             xmlResponse = loginUpdate().getPreScanResults(appId, buildId)
@@ -99,7 +99,7 @@ task veracodePreScanResults << {
 }
 
 task veracodeScanResults << {
-    if (!isMissingArguements(getName(), 'buildId')) {
+    if (!hasArguments(getName(), 'buildId')) {
         String xmlResponse = loginResults().detailedReport(buildId)
         writeXml('build/scan-results.xml', xmlResponse)
     }
@@ -151,7 +151,7 @@ task veracodeScanResultsInCsv(dependsOn: 'veracodeScanResults') << {
 }
 
 task veracodeCreateBuild << {
-    if (!isMissingArguements(getName(), 'appId', 'version')) {
+    if (!hasArguments(getName(), 'appId', 'version')) {
         Node buildInfo = writeXml('build/create-build.xml', loginUpdate().createBuild(appId, version))
         if (buildInfo.name().equals('error')) {
             println buildInfo.text()
@@ -171,7 +171,7 @@ task veracodeCreateBuild << {
 task generateToUpload << {
     List<File> files = []
 
-    if (!isMissingArguements(getName(), 'dir', 'force' + optional)) {
+    if (!hasArguments(getName(), 'dir', 'force' + optional)) {
 
         // prevent uploading if "to-upload" is not empty unless user force
         if (!project.hasProperty('force')) {
@@ -212,7 +212,7 @@ task veracodeUpload << {
     String xmlResponse = ''
     UploadAPIWrapper update = loginUpdate()
 
-    if (!isMissingArguements(getName(), 'appId')) {
+    if (!hasArguments(getName(), 'appId')) {
         // upload each file in build/to-upload
         new File('build/to-upload').eachFile() { file ->
             xmlResponse = update.uploadFile(appId, file.absolutePath)
@@ -228,7 +228,7 @@ task veracodeUpload << {
 }
 
 task veracodePreScan << {
-    if (!isMissingArguements(getName(), 'appId')) {
+    if (!hasArguments(getName(), 'appId')) {
         writeXml('build/pre-scan.xml', loginUpdate().beginPreScan(appId))
         println 'Check build/pre-scan.xml for response status.'
     }
@@ -236,7 +236,7 @@ task veracodePreScan << {
 
 task veracodeScan << {
 
-    if (!isMissingArguements(getName(), 'appId')) {
+    if (!hasArguments(getName(), 'appId')) {
         def moduleIds = []
         def whiteList = readListFromFile(new File("src/apps/${appId}/modules-whitelist.txt"))
         readXml('build/pre-scan-results.xml').each() { module ->
@@ -253,14 +253,14 @@ task veracodeScan << {
 
 task veracodeRemoveFile << {
     // TODO: this is not tested
-    if (!isMissingArguements(getName(), 'appId', 'fileId')) {
+    if (!hasArguments(getName(), 'appId', 'fileId')) {
         writeXml('build/remove-file.xml', loginUpdate().removeFile(appId, fileId))
     }
 }
 
 task veracodeDeleteBuild << {
-    // Removes the most recent build.
-    if (!isMissingArguements(getName(), 'appId')) {
+    // Removes the most recent build, even those that have their scan completed!
+    if (!hasArguments(getName(), 'appId')) {
         writeXml('build/delete-build.xml', loginUpdate().deleteBuild(appId))
     }
 }
@@ -289,7 +289,7 @@ task preScanModuleList() << {
  * "src/apps/${appId}/modules-*.txt".
  */
 task preScanModuleVerify() << {
-    if (!isMissingArguements(getName(), 'appId')) {
+    if (!hasArguments(getName(), 'appId')) {
 
         println "Verifying against modules list modules-*.txt..."
         println ""
@@ -347,7 +347,7 @@ task preScanModuleVerify() << {
  * Report flaws by teams as described in src/teams.json
  */
 task reportFlawsByTeam() << {
-    if (!isMissingArguements(getName(), 'appId', 'mode')) {
+    if (!hasArguments(getName(), 'appId', 'mode')) {
         def teams = new JsonSlurper().parse(new FileReader("src/apps/$appId/teams.json")).teams
         int count = 0
 
@@ -489,7 +489,7 @@ String findTeam(teams, flaw) {
     throw new UnexpectedException("Unable to resolve team")
 }
 
-boolean isMissingArguements(String taskName, String... arguements) {
+boolean hasArguments(String taskName, String... arguements) {
     StringBuilder outputMessage = new StringBuilder("Usage: gradle ${taskName}")
     boolean missingArguement = false
 
