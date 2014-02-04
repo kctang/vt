@@ -209,10 +209,10 @@ task veracodeUpload << {
     String xmlResponse = ''
     UploadAPIWrapper update = loginUpdate()
 
-    if (!hasArguments(getName(), 'appId')) {
+    if (!hasArguments(getName(), 'appId', 'maxUploadAttempts' + optional)) {
         File uploadFolder = new File('build/to-upload')
         def tries = 1;
-        def maxTries = Integer.parseInt(maximumUploadTries)
+        def maxTries = Integer.parseInt((hasProperty('maxUploadAttempts') ? maxUploadAttempts : maximumUploadTries))
 
         while (uploadFolder.list().length > 0 && (tries <= maxTries || maxTries == 0)) {
             println '\\/----------\\/----------\\/----------\\/----------\\/'
@@ -534,7 +534,8 @@ boolean hasArguments(String taskName, String... arguements) {
     'dir': '-Pdir=xxx',
     'force': '-Pforce',
     'fileId': '-PfileId=123',
-    'mode': '-Pmode=action|actionSummary|verbose']
+    'mode': '-Pmode=action|actionSummary|verbose',
+    'maxUploadAttempts': '-PmaxUploadAttempts=123']
 
     arguements.each() {
         if (it.endsWith(optional)) {
