@@ -1,5 +1,6 @@
 import com.veracode.apiwrapper.wrappers.UploadAPIWrapper
 import com.veracode.apiwrapper.wrappers.ResultsAPIWrapper
+import groovy.io.FileType
 import groovy.json.*
 
 import java.rmi.UnexpectedException
@@ -90,11 +91,7 @@ task veracodePreScanResults << {
         }
 
         Node result = writeXml('build/pre-scan-results.xml', xmlResponse)
-        if (result.name().equals('error')) {
-            println result.text()
-        } else {
-            println 'Pre-scan completed'
-        }
+        println ((result.name().equals('error')) ? result.text() : 'Pre-scan completed')
     }
 }
 
@@ -213,17 +210,54 @@ task veracodeUpload << {
     UploadAPIWrapper update = loginUpdate()
 
     if (!hasArguments(getName(), 'appId')) {
-        // upload each file in build/to-upload
-        new File('build/to-upload').eachFile() { file ->
-            xmlResponse = update.uploadFile(appId, file.absolutePath)
-            delete file.absolutePath
-            println "Processed $file.name"
+        File uploadFolder = new File('build/to-upload')
+        def tries = 1;
+        def maxTries = Integer.parseInt(maximumUploadTries)
+
+        while (uploadFolder.list().length > 0 && (tries <= maxTries || maxTries == 0)) {
+            println '\\/----------\\/----------\\/----------\\/----------\\/'
+            println "Take ${tries}"
+            println "Maximum upload attempts = ${maxTries} (0 means until the end of the world as we know it)"
+            println ''
+
+            def fileList = []
+            def error
+            uploadFolder.eachFileRecurse(FileType.FILES) { file ->
+                fileList << file
+            }
+
+            // upload each file in build/to-upload
+            for (File file : fileList) {
+                try {
+                    xmlResponse = update.uploadFile(appId, file.absolutePath)
+                    delete file.absolutePath
+                    println "Processed $file.name"
+                } catch (Exception e) {
+                    // write output of last upload
+                    writeXml("build/upload-file-${tries}.xml", xmlResponse)
+                    error = e
+
+                    println ''
+                    println e
+                    println ''
+                    println "Upload failing at take ${tries}"
+                    println '/\\----------/\\----------/\\----------/\\----------/\\'
+                    println ''
+
+                    sleep(5000)
+                    ++tries
+
+                    break
+                }
+            }
         }
 
-        // write output of last upload
-        writeXml('build/upload-file.xml', xmlResponse)
+        if (tries > maxTries) {
+            println "Exceeded maximum upload attempt : ${maxTries}"
+            throw error
+        }
 
-        println 'Check build/upload-file.xml for status of uploaded files.'
+        println 'Check build/upload-file-<n>.xml for status of uploaded files.'
     }
 }
 
