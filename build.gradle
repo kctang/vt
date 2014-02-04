@@ -234,7 +234,7 @@ task veracodeUpload << {
                     println "Processed $file.name"
                 } catch (Exception e) {
                     // write output of last upload
-                    writeXml("build/upload-file-${tries}.xml", xmlResponse)
+                    writeXml("build/upload-file.xml", xmlResponse)
                     error = e
 
                     println ''
@@ -257,7 +257,7 @@ task veracodeUpload << {
             throw error
         }
 
-        println 'Check build/upload-file-<n>.xml for status of uploaded files.'
+        println 'Check build/upload-file.xml for status of uploaded files.'
     }
 }
 
