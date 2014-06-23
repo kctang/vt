@@ -274,7 +274,7 @@ task veracodeDeleteBuild << {
     }
 }
 
-task preScanModuleList() << {
+task preScanModuleList << {
     // TODO: -PonlyFatalErrors
     readXml('build/pre-scan-results.xml').each() { module ->
         println "${module.@has_fatal_errors == 'true' ? '* ' : ''} ${module.@id} : ${module.@name}"
@@ -285,7 +285,7 @@ task preScanModuleList() << {
  * This task ensures all modules in pre-scan results are accounted for within the white/black list of modules in
  * "src/apps/${appId}/modules-*.txt".
  */
-task preScanModuleVerify() << {
+task preScanModuleVerify << {
     if (project.hasProperty('appId')) {
 
         println "Verifying against modules list modules-*.txt..."
@@ -345,7 +345,7 @@ task preScanModuleVerify() << {
 /**
  * Report flaws by teams as described in src/teams.json
  */
-task reportFlawsByTeam() << {
+task reportFlawsByTeam << {
     if (project.hasProperty('appId') && project.hasProperty('mode')) {
         def teams = new JsonSlurper().parse(new FileReader("src/apps/$appId/teams.json")).teams
         int count = 0
@@ -419,6 +419,19 @@ task reportFlawsByTeam() << {
 
     } else {
         println 'Usage: gradle reportFlawsByTeam -PappId=999 -Pmode=[action|actionSummary|verbose]'
+    }
+}
+
+task reportFlawsDiff << {
+    if (project.hasProperty('buildId1') && project.hasProperty('buildId2')) {
+        println 'Can you help to implement this? Basically, performing veracodeScanResults on two buildIds and report on:'
+        println '  - Flaws in build1 only.'
+        println '  - Flaws in build2 only.'
+        println '  - Flaws where status changed from build1 to build2.'
+        println '  - Think what else useful to know how to follow up.'
+        println '  - Format should be in ... probably csv (not sure).'
+    } else {
+        out.println 'Usage: gradle reportFlawsDiff -PbuildId1=123 -PbuildId2=456'
     }
 }
 
