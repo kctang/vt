@@ -71,6 +71,42 @@ To use the example above, change:
 - Replace "913" with the appropriate Jenkins job build number.
 - Replace "C:\temp\my-product#913" with the directory where the application is installed.
 
+## Veracode Report
+
+This tool provides the ability to generate CSV reports based on scan results for an application.
+
+1. First get the buildId of the application you want a report on using the `veracodeBuildList` command. The last item in the output represents the latest scan.
+2. Then generate the raw CSV flaw report to `build/scan-results.csv` using the `veracodeScanResultsInCsv` command.
+3. In addition to getting the flaw report, a more specific report that groups flaw by the module that it was reported from can be generated using the `reportFlawsByTeam` command (filtering managed in `teams.json`). This command has multiple modes:
+    - `action` - Report flaws that require action to be taken.
+    - `actionSummary` - Similar to `action` mode but more concise.
+    - `verbose` - List all flaws.
+
+### Example (Generating Reports)
+
+        C:\github\vt>gradle veracodeBuildList -PappId=20299
+        :veracodeBuildList
+        22792=xxx build #113
+        253467=xxx build #2758
+        259771=xxx build #2965
+        264509=xxx build #3057
+        264853=xxx build #3085
+        266517=xxx build #3145
+        BUILD SUCCESSFUL
+        Total time: 12.094 secs
+
+        C:\github\vt>gradle veracodeScanResultsInCsv -PbuildId=266517
+        :veracodeScanResults
+        :veracodeScanResultsInCsv
+        BUILD SUCCESSFUL
+        Total time: 13.105 secs
+
+        C:\github\vt>gradle reportFlawsByTeam -PappId=20299 -Pmode=action
+        :reportFlawsByTeam
+        ...output... (pipe the output to a file for analysis)
+
+TODO: Someone please help implement `reportFlawsDiff`.
+
 ## Tips
 
 ## Authentication

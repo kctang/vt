@@ -16,7 +16,10 @@ abstract class VeracodeTask extends DefaultTask {
     'fileId': '123',
     'mode': 'action|actionSummary|verbose',
     'maxUploadAttempts': '123',
-    'fileId': 'xxx' ]
+    'fileId': 'xxx',
+    'buildId1': '123',
+    'buildId2': '123'
+    ]
 
 	def requiredArguments = []
 	VeracodeUser veracodeUser

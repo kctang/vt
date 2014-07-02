@@ -16,6 +16,9 @@ class VeracodeScanTask extends VeracodeTask {
         }
         println "Modules in whitelist: ${whiteList.size()}"
         println "Modules selected: ${moduleIds.size()}"
+        if(whiteList.size() != moduleIds.size()) {
+            println 'WARNING: Not all the files in whitelist are being scanned. Some modules no longer exist? Manual whitelist maintenance should be performed.'
+        }
 
         writeXml('build/scan.xml', loginUpdate().beginScan(project.appId, moduleIds.join(","), 'false'))
 	}
