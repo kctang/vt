@@ -1,9 +1,9 @@
 class ReportFlawsDiffTask extends VeracodeTask {
 	static final String NAME = 'reportFlawsDiff'
 
-	VeracodeScanTask() {
+	ReportFlawsDiffTask() {
 		description = 'Compares veracode report for two builds'
-		requiredArguments << 'buildId1' 'buildId2'
+		requiredArguments << 'buildId1' << 'buildId2'
 	}
 
 	void run() {
