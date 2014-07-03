@@ -76,7 +76,11 @@ To use the example above, change:
 This tool provides the ability to generate CSV reports based on scan results for an application.
 
 1. First get the buildId of the application you want a report on using the `veracodeBuildList` command. The last item in the output represents the latest scan.
+<<<<<<< HEAD
 2.  Then generate the raw CSV flaw report to `build/scan-results.csv` using the `veracodeScanResultsInCsv` command.
+=======
+2. Then generate the raw CSV flaw report to `build/scan-results.csv` using the `veracodeScanResultsInCsv` command.
+>>>>>>> c4a558af8ef9d3b16a9609ce44cd15ae3845ac1d
 3. In addition to getting the flaw report, a more specific report that groups flaw by the module that it was reported from can be generated using the `reportFlawsByTeam` command (filtering managed in `teams.json`). This command has multiple modes:
     - `action` - Report flaws that require action to be taken.
     - `actionSummary` - Similar to `action` mode but more concise.
