@@ -1,0 +1,14 @@
+allprojects {
+	apply plugin: 'groovy'
+	apply plugin: 'maven'
+
+	dependencies {
+	    compile gradleApi()
+	    compile localGroovy()
+	    compile fileTree(dir: 'libs', include: '*.jar')
+	}
+
+	repositories {
+        mavenCentral()
+    }
+}
