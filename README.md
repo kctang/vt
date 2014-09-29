@@ -77,7 +77,7 @@ This tool provides the ability to generate CSV reports based on scan results for
 
 1. First get the buildId of the application you want a report on using the `veracodeBuildList` command. The last item in the output represents the latest scan.
 
-2. Then generate the raw CSV flaw report to `build/scan-results.csv` using the `veracodeScanResultsInCsv` command.
+2. Then generate the raw CSV flaw report to `build/scan-results.csv` by running the `veracodeScanResults` and `veracodeScanResultsInCsv` tasks in sequence.
 
 3. In addition to getting the flaw report, a more specific report that groups flaw by the module that it was reported from can be generated using the `reportFlawsByTeam` command (filtering managed in `teams.json`). This command has multiple modes:
     - `action` - Report flaws that require action to be taken.
@@ -97,7 +97,7 @@ This tool provides the ability to generate CSV reports based on scan results for
         BUILD SUCCESSFUL
         Total time: 12.094 secs
 
-        C:\github\vt>gradle veracodeScanResultsInCsv -PbuildId=266517
+        C:\github\vt>gradle veracodeScanResults veracodeScanResultsInCsv -PbuildId=266517
         :veracodeScanResults
         :veracodeScanResultsInCsv
         BUILD SUCCESSFUL
