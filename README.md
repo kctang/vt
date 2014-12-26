@@ -13,13 +13,13 @@ It helps perform the following tasks:
 ## Pre-Requisites
 
 * Veracode account & application to perform scanning.
-* Veracode Java API JAR file (copy to `lib` directory).
+* Veracode Java API JAR file (copy to `buildSrc/lib` directory). This API wrapper can be [downloaded](https://analysiscenter.veracode.com/auth/helpCenter/api/c_about_wrappers.html) from Veracode's website.
 * JDK 7 is a requirement for Veracode Java API.
 
 ## Getting Started
 
 * Clone project.
-* Copy `VeracodeJavaAPI.jar` (from Veracode) to a newly created `lib` directory.
+* Copy `VeracodeJavaAPI.jar` (from Veracode) to a newly created `buildSrc/lib` directory.
 * Rename `sample-gradle.properties` to `gradle.properties` and edit its contents to setup Veracode credentials.
 * Execute `gradle tasks` to see available tasks.
 * Execute `gradle veracodeApplicationList` to see available applications along with its `appId`.
