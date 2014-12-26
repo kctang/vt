@@ -40,10 +40,9 @@ re-run this task to continue uploading outstanding files.
 * `veracodePreScan` Perform pre-scan for current build. This task will take some time, depending on number of files
 being processed.
 ** Wait for pre-scan to complete with the `veracodeBuildInfo` task. It should return "status=Pre-Scan Success".
-# `veracodePreScanResults` and `preScanModuleVerify` Once pre-scan has completed successfully, we need to perform a
-pre-scan module verification. This task ensures all modules in pre-scan results are accounted for within the
+# `veracodePreScanResults` and `preScanModuleVerify` Once pre-scan has completed successfully, we need to perform a pre-scan module verification. This task ensures all modules in pre-scan results are accounted for within the
 white/black list of modules in `src/apps/${appId}/modules-*.txt`. Any unaccounted module should be manually resolved by
-updating the appropriate `modules-*.txt` file.
+updating the appropriate `modules-*.txt` file. Note that `preScanModuleVerify` uses output from the `veracodePreScanResults` task so it must be executed first.
 
 ### Example Sequence of Tasks
 
@@ -56,6 +55,7 @@ Described as Gradle tasks, a typical submission workflow might look like this:
     gradle veracodeUpload -PappId=20299
     gradle veracodePreScan -PappId=20299
     gradle veracodePreScanResults -PappId=20299
+    # Note: Must execute veracodePreScanResults before preScanModuleVerify because it uses the former's output
     gradle preScanModuleVerify -PappId=20299
     gradle veracodeScan -PappId=20299
     gradle veracodeScanResults -PbuildId=xxxxx OR 
@@ -124,7 +124,7 @@ Most Veracode related tasks will generate a relevant `build/xxx.xml` file. It mi
 of this file to gain additional insight into the task that was just executed.
 
 ## Check Pre-Scan Results
-This tasks is used to check (Note: this task can take some time to complete):
+This task is used to check (Note: this task can take some time to complete):
     gradle -q veracodePreScanResults -PappId=20299
 
 ## Check Build Status
