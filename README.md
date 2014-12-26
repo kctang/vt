@@ -51,7 +51,7 @@ Described as Gradle tasks, a typical submission workflow might look like this:
 
     # Download application from Jenkins (manual).
     # Install the application so that we can scan for files to upload & scan (manual).
-    gradle veracodeCreateBuild -PappId=20299 -Pversion="my-product#913"
+    gradle veracodeCreateBuild -PappId=20299 -PbuildName="my-product#913"
     gradle generateToUpload -Pdir="C:\temp\my-product#913"
     gradle veracodeUpload -PappId=20299
     gradle veracodePreScan -PappId=20299
