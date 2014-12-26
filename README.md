@@ -22,7 +22,7 @@ It helps perform the following tasks:
 * Copy `VeracodeJavaAPI.jar` (from Veracode) to a newly created `buildSrc/lib` directory.
 * Rename `sample-gradle.properties` to `gradle.properties` and edit its contents to setup Veracode credentials.
 * Execute `gradle tasks` to see available tasks.
-* Execute `gradle veracodeApplicationList` to see available applications along with its `appId`.
+* Execute `gradle veracodeAppList` to see available applications along with its `appId`.
 
 ## Typical Veracode Submission Workflow
 
