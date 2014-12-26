@@ -59,6 +59,7 @@ Described as Gradle tasks, a typical submission workflow might look like this:
     gradle preScanModuleVerify -PappId=20299
     gradle veracodeScan -PappId=20299
     gradle veracodeScanResults -PbuildId=xxxxx OR 
+    # Note: Must execute veracodeScanResults before veracodeScanResultsInCsv
     gradle veracodeScanResultsInCsv -PbuildId=xxxxx
 
 #### Using This Example
